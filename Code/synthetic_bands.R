@@ -87,9 +87,9 @@ print(summary(fit))
 
 # ---- plot runtime vs bands ----
 p_runtime <- ggplot(results_B, aes(B, runtime_sec)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 2.5) +
-  geom_smooth(method = "lm", se = TRUE, linewidth = 0.9) +
+  geom_line(linewidth = 1, col = "green") +
+  geom_point(size = 2.5, col = "green") +
+  geom_smooth(method = "lm", se = TRUE, linewidth = 0.9, col = "cyan1") +
   labs(
     title = "Runtime vs spectral dimensionality",
     subtitle = "Fixed image size N = 2.5 × 10^5 pixels; varying number of bands B",
@@ -102,8 +102,9 @@ print(p_runtime)
 
 # ---- plot output memory vs bands ----
 p_mem <- ggplot(results_B, aes(B, output_MB)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 2.5) +
+  geom_line(linewidth = 1, col = "green") +
+  geom_point(size = 2.5, col = "green") +
+  geom_smooth(method = "lm", se = TRUE, linewidth = 0.9, col = "cyan1") +
   labs(
     title = "Output memory footprint vs spectral dimensionality",
     subtitle = "Memory dominated by K output rasters (distances + memberships), not by input band count",
