@@ -79,7 +79,7 @@ band_scaling_experiment <- function(B_seq = 2:20,
 }
 
 # ---- run it ----
-results_B <- band_scaling_experiment(B_seq = 2:20, N_target = 2.5e5, num_clusters = 3, m = 2, seed = 1)
+results_B <- band_scaling_experiment(B_seq = 2:20, N_target = 2.5e5, num_clusters = 4, m = 2, seed = 1)
 
 # ---- corroborate "approximately linear runtime in B" ----
 fit <- lm(runtime_sec ~ B, data = results_B)
@@ -92,7 +92,7 @@ p_runtime_bands <- ggplot(results_B, aes(B, runtime_sec)) +
   geom_smooth(method = "lm", se = TRUE, linewidth = 0.9, col = "cyan1") +
   labs(
     title = "Runtime vs spectral dimensionality",
-    subtitle = "Fixed image size N = 2.5 × 10^5 pixels; varying number of bands B",
+    subtitle = "Fixed image size N = 2.5 × 10^5 pixels\nFixed number of clusters K = 4",
     x = "Number of bands (B)",
     y = "Runtime (seconds)"
   ) +
