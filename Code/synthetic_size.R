@@ -3,8 +3,8 @@
 library(terra)
 library(imageRy)   # contains im.fuzzy()
 
-# --- Helper: generate synthetic multiband raster ----------------------------
-make_synthetic_raster <- function(n, B = 4, K = 4, overlap = 0.3, seed = 1) {
+# --- Generate synthetic multiband raster ----------------------------
+make_synthetic_raster <- function(n, B = 4, K = 3, overlap = 0.3, seed = 100) {
   set.seed(seed)
 
   # grid
@@ -39,7 +39,7 @@ make_synthetic_raster <- function(n, B = 4, K = 4, overlap = 0.3, seed = 1) {
 # --- Experimental settings --------------------------------------------------
 sizes <- c(100, 250, 500, 750, 1000)  # image side length
 B <- 4
-K <- 4
+K <- 3
 m <- 2
 
 results <- data.frame(
@@ -79,18 +79,18 @@ for (i in seq_along(sizes)) {
 print(results)
 
 # --- Simple scaling plot ------------------------------------------
-p_scale_runtime <- ggplot(results, aes(x = N, y = runtime_sec)) +
+p_runtime_size <- ggplot(results, aes(x = N, y = runtime_sec)) +
   geom_line(linewidth = 1, col = "green") +
   geom_point(size = 3, col = "green") +
   geom_smooth(method = "lm", se = TRUE, linewidth = 0.9, col = "cyan1") +
   labs(
-    title = "Scaling with image size",
-    subtitle = "Fixed number of bands B = 4, Varying number of pixels N",
+    title = "Runtime vs image size",
+    subtitle = "Fixed number of bands B = 4\nFixed number of clusters K = 4",
     x = "Number of pixels (N)",
     y = "Runtime (seconds)"
   ) +
   theme_minimal(base_size = 14)
 
-print(p_scale_runtime)
+print(p_runtime_size)
 
 
