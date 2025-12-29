@@ -25,7 +25,7 @@ band_scaling_experiment <- function(B_seq = 2:20,
                                    N_target = 2.5e5,
                                    num_clusters = 3,
                                    m = 2,
-                                   seed = 1,
+                                   seed = 100,
                                    do_plot = FALSE) {
 
   # Choose fixed dimensions matching N_target
@@ -79,7 +79,7 @@ band_scaling_experiment <- function(B_seq = 2:20,
 }
 
 # ---- run it ----
-results_B <- band_scaling_experiment(B_seq = 2:20, N_target = 2.5e5, num_clusters = 4, m = 2, seed = 1)
+results_B <- band_scaling_experiment(B_seq = 2:20, N_target = 2.5e5, num_clusters = 3, m = 2, seed = 1)
 
 # ---- corroborate "approximately linear runtime in B" ----
 fit <- lm(runtime_sec ~ B, data = results_B)
