@@ -79,7 +79,8 @@ p_runtime_clusters <- ggplot(results_K, aes(x = K, y = runtime_sec)) +
   geom_point(size = 3, color = "green") +
   geom_smooth(method = "lm", se = TRUE, linewidth = 0.9, color = "cyan1") +
   scale_x_continuous(
-    breaks = seq(min(results_K$K), max(results_K$K), by = 1)
+    breaks = seq(2, max(results_K$K), by = 2),     # ⬅ grid lines at 2, 4, 6, …
+    limits = c(min(results_K$K), max(results_K$K))
   ) +
   labs(
     title = "Runtime vs number of clusters",
@@ -87,7 +88,10 @@ p_runtime_clusters <- ggplot(results_K, aes(x = K, y = runtime_sec)) +
     x = "Number of clusters (K)",
     y = "Runtime (seconds)"
   ) +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) +
+  theme(
+    panel.grid.minor.x = element_blank()           # ⬅ no odd/fractional grids
+  )
 
 print(p_runtime_clusters)
 
