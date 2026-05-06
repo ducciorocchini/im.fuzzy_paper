@@ -7,6 +7,7 @@ library(mclust)      # ARI
 library(aricode)     # NMI
 library(e1071)
 library(imageRy) # im.fuzzy function
+library(ggplot2)
 
 set.seed(42)
 
@@ -76,3 +77,31 @@ results <- data.frame(
 )
 
 print(results)
+
+# plot
+
+library(ggplot2)
+
+# Example:
+# results <- data.frame(
+#   Method = c("k-means", "fuzzy c-means", "im.fuzzy"),
+#   ARI = c(0.71, 0.75, 0.74),
+#   NMI = c(0.69, 0.73, 0.72)
+# )
+
+# Convert to long format
+results_long <- data.frame(
+  Method = rep(results$Method, 2),
+  Metric = rep(c("ARI", "NMI"), each = nrow(results)),
+  Value = c(results$ARI, results$NMI)
+)
+
+# Plot
+ggplot(results_long, aes(x = Method, y = Value, fill = Metric)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Comparison of clustering performance",
+    x = "Method",
+    y = "Score"
+  )
