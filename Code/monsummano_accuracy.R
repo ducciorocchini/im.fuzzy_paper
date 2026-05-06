@@ -136,10 +136,10 @@ print(p)
 # 12. Save plot
 # -----------------------------
 
-ggsave(
-  filename = "monsummano_validation_metrics.png",
-  plot = p,
-  width = 8,
-  height = 5,
-  dpi = 300
-)
+# ggsave(
+#  filename = "monsummano_validation_metrics.png",
+#  plot = p,
+#  width = 8,
+#  height = 5,
+#  dpi = 300
+# )
