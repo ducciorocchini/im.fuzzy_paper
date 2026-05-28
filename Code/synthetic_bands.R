@@ -1,3 +1,4 @@
+library(imageRy)
 
 # ---- helper: make a synthetic SpatRaster with fixed N, variable B ----
 make_synthetic_raster <- function(nrows = 500, ncols = 500, nbands = 3, seed = 1) {
