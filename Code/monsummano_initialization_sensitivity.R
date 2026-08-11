@@ -31,6 +31,8 @@ library(ggplot2)
 img <- rast(
   "https://raw.githubusercontent.com/ducciorocchini/im.fuzzy_paper/main/Data/monsummano.png"
 )
+img <- flip(img)
+img <- c(img[[1]], img[[2]], img[[3]])
 
 print(img)
 
