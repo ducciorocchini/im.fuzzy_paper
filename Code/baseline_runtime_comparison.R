@@ -15,6 +15,10 @@
 #   - Keep number of bands B fixed
 #   - Keep number of clusters K fixed
 #   - Repeat each configuration several times
+#
+# IMPORTANT:
+# For fairness, preprocessing is included in the timed/memory
+# benchmark for all three methods.
 # ============================================================
 
 
@@ -37,6 +41,7 @@ library(dplyr)
 # 2. Experimental parameters
 # ------------------------------------------------------------
 
+# Number of pixels to test
 N_values <- c(
   1e4,
   5e4,
@@ -45,11 +50,19 @@ N_values <- c(
   5e5
 )
 
+# Fixed number of bands
 B <- 4
+
+# Fixed number of clusters
 K <- 4
+
+# Fuzzifier
 m <- 2
 
+# Number of repetitions
 n_rep <- 10
+
+# Base random seed
 base_seed <- 42
 
 
@@ -67,10 +80,10 @@ results <- data.frame(
 )
 
 
-# ------------------------------------------------------------
+# ============================================================
 # 4. Helper function
-# Scale each band to 0-255
-# ------------------------------------------------------------
+# Scale each band independently to 0-255
+# ============================================================
 
 scale_255 <- function(x) {
 
@@ -95,7 +108,6 @@ for (N in N_values) {
   cat("============================================\n")
   cat("Requested number of pixels:", N, "\n")
   cat("============================================\n")
-
 
   # ----------------------------------------------------------
   # Raster dimensions approximately matching N
@@ -140,20 +152,7 @@ for (N in N_values) {
 
 
     # --------------------------------------------------------
-    # Scale bands to 0-255
-    # --------------------------------------------------------
-
-    X_scaled <- apply(
-      X,
-      2,
-      scale_255
-    )
-
-    X_scaled <- as.matrix(X_scaled)
-
-
-    # --------------------------------------------------------
-    # Build equivalent raster for im.fuzzy
+    # Build equivalent SpatRaster for im.fuzzy()
     # --------------------------------------------------------
 
     r <- terra::rast(
@@ -172,13 +171,21 @@ for (N in N_values) {
     cat("Running k-means\n")
 
     gc()
-
     set.seed(base_seed)
 
     ram_km <- peakRAM::peakRAM({
 
+      # Preprocessing included in benchmark
+      X_km <- apply(
+        X,
+        2,
+        scale_255
+      )
+
+      X_km <- as.matrix(X_km)
+
       km <- stats::kmeans(
-        X_scaled,
+        X_km,
         centers = K
       )
 
@@ -186,7 +193,10 @@ for (N in N_values) {
 
 
     runtime_km <- ram_km$Elapsed_Time_sec[1]
-    memory_km <- ram_km$Peak_RAM_Used_MiB[1]
+
+    # On this system, Peak_RAM_Used_MiB is returned in bytes.
+    # Convert explicitly to MiB.
+    memory_km <- ram_km$Peak_RAM_Used_MiB[1] / 1024^2
 
 
     results <- rbind(
@@ -201,7 +211,7 @@ for (N in N_values) {
     )
 
 
-    rm(km)
+    rm(km, X_km)
     gc()
 
 
@@ -212,13 +222,21 @@ for (N in N_values) {
     cat("Running fuzzy c-means\n")
 
     gc()
-
     set.seed(base_seed)
 
     ram_fcm <- peakRAM::peakRAM({
 
+      # Preprocessing included in benchmark
+      X_fcm <- apply(
+        X,
+        2,
+        scale_255
+      )
+
+      X_fcm <- as.matrix(X_fcm)
+
       fcm <- e1071::cmeans(
-        X_scaled,
+        X_fcm,
         centers = K,
         m = m
       )
@@ -227,7 +245,8 @@ for (N in N_values) {
 
 
     runtime_fcm <- ram_fcm$Elapsed_Time_sec[1]
-    memory_fcm <- ram_fcm$Peak_RAM_Used_MiB[1]
+
+    memory_fcm <- ram_fcm$Peak_RAM_Used_MiB[1] / 1024^2
 
 
     results <- rbind(
@@ -242,18 +261,17 @@ for (N in N_values) {
     )
 
 
-    rm(fcm)
+    rm(fcm, X_fcm)
     gc()
 
 
     # ========================================================
-    # METHOD 3: im.fuzzy
+    # METHOD 3: im.fuzzy()
     # ========================================================
 
     cat("Running im.fuzzy\n")
 
     gc()
-
     set.seed(base_seed)
 
     ram_imf <- peakRAM::peakRAM({
@@ -270,7 +288,8 @@ for (N in N_values) {
 
 
     runtime_imf <- ram_imf$Elapsed_Time_sec[1]
-    memory_imf <- ram_imf$Peak_RAM_Used_MiB[1]
+
+    memory_imf <- ram_imf$Peak_RAM_Used_MiB[1] / 1024^2
 
 
     results <- rbind(
@@ -290,12 +309,11 @@ for (N in N_values) {
 
 
     # --------------------------------------------------------
-    # Clean large objects
+    # Clean large objects before next repetition
     # --------------------------------------------------------
 
     rm(
       X,
-      X_scaled,
       r,
       ram_km,
       ram_fcm,
@@ -311,7 +329,11 @@ for (N in N_values) {
 # 6. Inspect raw results
 # ============================================================
 
-cat("\nRAW RESULTS\n")
+cat("\n")
+cat("============================================\n")
+cat("RAW RESULTS\n")
+cat("============================================\n")
+
 print(results)
 
 cat("\nColumn names:\n")
@@ -319,7 +341,7 @@ print(names(results))
 
 
 # ============================================================
-# 7. Clean summary using dplyr
+# 7. Summary statistics
 # ============================================================
 
 summary_clean <- results %>%
@@ -333,7 +355,11 @@ summary_clean <- results %>%
   )
 
 
-cat("\nSUMMARY\n")
+cat("\n")
+cat("============================================\n")
+cat("SUMMARY RESULTS\n")
+cat("============================================\n")
+
 print(summary_clean)
 
 cat("\nSummary column names:\n")
@@ -353,22 +379,30 @@ p_runtime <- ggplot(
     group = Method
   )
 ) +
+
   geom_line(
     linewidth = 1
   ) +
+
   geom_point(
     size = 3
   ) +
+
   geom_errorbar(
     aes(
-      ymin = pmax(0, Runtime_mean - Runtime_sd),
+      ymin = pmax(
+        0,
+        Runtime_mean - Runtime_sd
+      ),
       ymax = Runtime_mean + Runtime_sd
     ),
     width = 0
   ) +
+
   theme_minimal(
     base_size = 14
   ) +
+
   labs(
     title = "Computational runtime comparison",
     subtitle = paste(
@@ -380,6 +414,7 @@ p_runtime <- ggplot(
     y = "Runtime (seconds)",
     color = "Method"
   )
+
 
 print(p_runtime)
 
@@ -397,22 +432,30 @@ p_memory <- ggplot(
     group = Method
   )
 ) +
+
   geom_line(
     linewidth = 1
   ) +
+
   geom_point(
     size = 3
   ) +
+
   geom_errorbar(
     aes(
-      ymin = pmax(0, Peak_RAM_mean - Peak_RAM_sd),
+      ymin = pmax(
+        0,
+        Peak_RAM_mean - Peak_RAM_sd
+      ),
       ymax = Peak_RAM_mean + Peak_RAM_sd
     ),
     width = 0
   ) +
+
   theme_minimal(
     base_size = 14
   ) +
+
   labs(
     title = "Peak memory comparison",
     subtitle = paste(
@@ -424,6 +467,7 @@ p_memory <- ggplot(
     y = "Peak RAM used (MiB)",
     color = "Method"
   )
+
 
 print(p_memory)
 
@@ -440,7 +484,11 @@ largest_results <- summary_clean %>%
   filter(N == largest_N)
 
 
-cat("\nRESULTS AT LARGEST IMAGE SIZE\n")
+cat("\n")
+cat("============================================\n")
+cat("RESULTS AT LARGEST IMAGE SIZE\n")
+cat("============================================\n")
+
 print(largest_results)
 
 
