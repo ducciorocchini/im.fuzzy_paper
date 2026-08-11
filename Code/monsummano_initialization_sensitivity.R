@@ -327,13 +327,6 @@ p1 <- ggplot(
     position = "dodge"
   ) +
 
-  scale_fill_manual(
-    values = c(
-      "#440154FF",
-      "#FDE725FF"
-    )
-  ) +
-
   theme_minimal(
     base_size = 14
   ) +
@@ -392,13 +385,6 @@ p2 <- ggplot(
 
   geom_col(
     position = "dodge"
-  ) +
-
-  scale_fill_manual(
-    values = c(
-      "#440154FF",
-      "#FDE725FF"
-    )
   ) +
 
   coord_cartesian(
@@ -467,12 +453,6 @@ p3 <- ggplot(
 
   geom_boxplot(
     width = 0.6
-  ) +
-
-  scale_fill_viridis_d() +
-
-  theme_minimal(
-    base_size = 14
   ) +
 
   labs(
