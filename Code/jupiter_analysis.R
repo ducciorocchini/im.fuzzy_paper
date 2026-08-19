@@ -20,7 +20,7 @@ seed <- 42
 # ------------------------------------------------------------
 
 res <- imageRy::im.fuzzy(
-  img_masked,
+  img_masked, # from jupiter_cluster_number.R
   num_clusters = K,
   m = m,
   seed = seed,
