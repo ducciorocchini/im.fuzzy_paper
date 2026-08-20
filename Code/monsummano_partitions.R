@@ -3,39 +3,52 @@
 #
 # Panels:
 # (a) Original RGB image
-# (b) k-means
-# (c) fuzzy c-means
-# (d) im.fuzzy()
+# (b) k-means partition
+# (c) fuzzy C-means maximum-membership partition
+# (d) im.fuzzy() maximum-membership partition
 #
-# K = 4
+# K = 2
 # ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Required packages
+# ------------------------------------------------------------
 
 library(terra)
 library(e1071)
 library(imageRy)
 library(clue)
+library(viridisLite)
+
 
 # ------------------------------------------------------------
-# 1. Load Monsummano image
+# 2. Load Monsummano image
 # ------------------------------------------------------------
 
-# CHANGE THIS to the same import command/path already used
-# in your Monsummano analyses
+monsummano_url <- paste0(
+  "https://raw.githubusercontent.com/",
+  "ducciorocchini/im.fuzzy_paper/main/Data/",
+  "monsummano.png"
+)
 
-img <- rast("https://raw.githubusercontent.com/ducciorocchini/im.fuzzy_paper/main/Data/monsummano.png")
+img <- terra::rast(monsummano_url)
+img <- flip(img)
 
 print(img)
 
+
 # ------------------------------------------------------------
-# 2. Parameters
+# 3. Parameters
 # ------------------------------------------------------------
 
-K <- 4
+K <- 2
 m <- 2
 seed <- 42
 
+
 # ------------------------------------------------------------
-# 3. Extract valid pixels
+# 4. Extract valid pixels
 # ------------------------------------------------------------
 
 X <- terra::as.matrix(img)
@@ -48,8 +61,11 @@ X_valid <- X[
   drop = FALSE
 ]
 
+
 # ------------------------------------------------------------
-# 4. Same 0-255 scaling used by im.fuzzy()
+# 5. Scale bands independently to 0-255
+#
+# Same preprocessing used internally by im.fuzzy()
 # ------------------------------------------------------------
 
 scale_255 <- function(x) {
@@ -64,6 +80,7 @@ scale_255 <- function(x) {
   255 * (x - xmin) / (xmax - xmin)
 }
 
+
 X_scaled <- apply(
   X_valid,
   2,
@@ -72,21 +89,23 @@ X_scaled <- apply(
 
 X_scaled <- as.matrix(X_scaled)
 
+
 # ============================================================
-# 5. K-MEANS
+# 6. K-MEANS
 # ============================================================
 
 set.seed(seed)
 
-km <- kmeans(
+km <- stats::kmeans(
   X_scaled,
   centers = K
 )
 
 labels_km <- km$cluster
 
+
 # ============================================================
-# 6. FUZZY C-MEANS
+# 7. FUZZY C-MEANS
 # ============================================================
 
 set.seed(seed)
@@ -103,8 +122,9 @@ labels_fcm <- apply(
   which.max
 )
 
+
 # ============================================================
-# 7. im.fuzzy()
+# 8. im.fuzzy()
 # ============================================================
 
 imf <- imageRy::im.fuzzy(
@@ -132,12 +152,13 @@ labels_imf <- apply(
   which.max
 )
 
+
 # ============================================================
-# 8. MATCH CLUSTER LABELS TO K-MEANS
+# 9. MATCH CLUSTER LABELS TO K-MEANS
 #
-# Cluster numbers are arbitrary.
-# We relabel FCM and im.fuzzy so that corresponding spatial
-# partitions use the same colors.
+# Cluster IDs are arbitrary. This step relabels fuzzy C-means
+# and im.fuzzy() so that corresponding groups use the same
+# colors in all panels.
 # ============================================================
 
 match_labels <- function(reference, target, K) {
@@ -147,19 +168,18 @@ match_labels <- function(reference, target, K) {
     factor(target, levels = seq_len(K))
   )
 
-  # Maximize overlap between target and reference clusters
   assignment <- clue::solve_LSAP(
     tab,
     maximum = TRUE
   )
 
-  # assignment[i] = target cluster corresponding to
-  # reference cluster i
   mapping <- integer(K)
 
   for (ref_cluster in seq_len(K)) {
 
-    target_cluster <- assignment[ref_cluster]
+    target_cluster <- as.integer(
+      assignment[ref_cluster]
+    )
 
     mapping[target_cluster] <- ref_cluster
   }
@@ -167,23 +187,43 @@ match_labels <- function(reference, target, K) {
   mapping[target]
 }
 
+
 labels_fcm_matched <- match_labels(
-  labels_km,
-  labels_fcm,
-  K
+  reference = labels_km,
+  target = labels_fcm,
+  K = K
 )
 
 labels_imf_matched <- match_labels(
-  labels_km,
-  labels_imf,
-  K
+  reference = labels_km,
+  target = labels_imf,
+  K = K
 )
 
+
 # ============================================================
-# 9. BUILD PARTITION RASTERS
+# 10. CHECK AGREEMENT AFTER LABEL MATCHING
+# ============================================================
+
+cat(
+  "\nProportion identical: k-means vs fuzzy C-means =",
+  mean(labels_km == labels_fcm_matched),
+  "\n"
+)
+
+cat(
+  "Proportion identical: k-means vs im.fuzzy =",
+  mean(labels_km == labels_imf_matched),
+  "\n"
+)
+
+
+# ============================================================
+# 11. BUILD PARTITION RASTERS
 # ============================================================
 
 template <- img[[1]]
+
 
 make_partition <- function(labels) {
 
@@ -201,6 +241,7 @@ make_partition <- function(labels) {
   r
 }
 
+
 r_km <- make_partition(
   labels_km
 )
@@ -213,8 +254,11 @@ r_imf <- make_partition(
   labels_imf_matched
 )
 
+
 # ============================================================
-# 10. COLORBLIND-FRIENDLY CLUSTER PALETTE
+# 12. COLORBLIND-FRIENDLY CLUSTER PALETTE
+#
+# Same visual language used elsewhere in the paper
 # ============================================================
 
 cluster_colors <- viridisLite::viridis(
@@ -223,14 +267,15 @@ cluster_colors <- viridisLite::viridis(
   end = 0.9
 )
 
+
 # ============================================================
-# 11. PLOT
+# 13. PLOT FIGURE
 # ============================================================
 
 png(
-  "monsummano_partitions.png",
+  filename = "monsummano_partitions_K2.png",
   width = 3000,
-  height = 2600,
+  height = 2400,
   res = 300
 )
 
@@ -239,8 +284,9 @@ par(
   mar = c(1, 1, 3, 1)
 )
 
+
 # ------------------------------------------------------------
-# (a) Original image
+# (a) RGB image
 # ------------------------------------------------------------
 
 terra::plotRGB(
@@ -252,6 +298,7 @@ terra::plotRGB(
   axes = FALSE,
   main = "(a) RGB image"
 )
+
 
 # ------------------------------------------------------------
 # (b) k-means
@@ -270,8 +317,9 @@ terra::plot(
   main = "(b) k-means"
 )
 
+
 # ------------------------------------------------------------
-# (c) fuzzy c-means
+# (c) fuzzy C-means
 # ------------------------------------------------------------
 
 terra::plot(
@@ -284,11 +332,12 @@ terra::plot(
   ),
   axes = FALSE,
   legend = FALSE,
-  main = "(c) fuzzy c-means"
+  main = "(c) fuzzy C-means"
 )
 
+
 # ------------------------------------------------------------
-# (d) im.fuzzy
+# (d) im.fuzzy()
 # ------------------------------------------------------------
 
 terra::plot(
@@ -304,21 +353,29 @@ terra::plot(
   main = "(d) im.fuzzy()"
 )
 
+
 dev.off()
 
+
 # ============================================================
-# 12. OPTIONAL CHECK OF AGREEMENT AFTER LABEL MATCHING
+# 14. OPTIONAL: SAVE PARTITION RASTERS
 # ============================================================
 
-cat(
-  "\nProportion identical: k-means vs fuzzy c-means =",
-  mean(labels_km == labels_fcm_matched),
-  "\n"
+terra::writeRaster(
+  r_km,
+  "monsummano_kmeans_K2.tif",
+  overwrite = TRUE
 )
 
-cat(
-  "Proportion identical: k-means vs im.fuzzy =",
-  mean(labels_km == labels_imf_matched),
-  "\n"
+terra::writeRaster(
+  r_fcm,
+  "monsummano_fuzzy_cmeans_K2.tif",
+  overwrite = TRUE
+)
+
+terra::writeRaster(
+  r_imf,
+  "monsummano_imfuzzy_K2.tif",
+  overwrite = TRUE
 )
 
