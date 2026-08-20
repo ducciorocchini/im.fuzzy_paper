@@ -515,7 +515,130 @@ terra::writeRaster(
   overwrite = TRUE
 )
 
+##########
+##########
 
 # ============================================================
-# END
+# MONSUMMANO
+# MEMBERSHIP-WEIGHTED RGB BRIGHTNESS DISTRIBUTIONS
 # ============================================================
+
+library(ggplot2)
+library(viridisLite)
+
+
+# ------------------------------------------------------------
+# 1. RGB brightness
+#
+# Arithmetic mean of R, G and B for each valid pixel
+# ------------------------------------------------------------
+
+brightness_all <- rowMeans(
+  X_valid[, 1:3, drop = FALSE]
+)
+
+
+# ------------------------------------------------------------
+# 2. Build long data frame
+#
+# Use the matched im.fuzzy memberships so Cluster 1 and
+# Cluster 2 correspond to those shown in the membership maps.
+# ------------------------------------------------------------
+
+brightness_long <- rbind(
+
+  data.frame(
+    brightness = brightness_all,
+    Cluster = "Cluster 1",
+    Membership = U_imf_matched[, 1]
+  ),
+
+  data.frame(
+    brightness = brightness_all,
+    Cluster = "Cluster 2",
+    Membership = U_imf_matched[, 2]
+  )
+)
+
+
+brightness_long$Cluster <- factor(
+  brightness_long$Cluster,
+  levels = c(
+    "Cluster 1",
+    "Cluster 2"
+  )
+)
+
+
+# ------------------------------------------------------------
+# 3. Same purple / lime palette used in the paper
+# ------------------------------------------------------------
+
+paper_colors <- viridisLite::viridis(
+  2,
+  option = "D",
+  end = 0.9
+)
+
+
+# ============================================================
+# 4. MEMBERSHIP-WEIGHTED DENSITY PLOT
+# ============================================================
+
+p_brightness <- ggplot(
+  brightness_long,
+  aes(
+    x = brightness,
+    weight = Membership,
+    fill = Cluster
+  )
+) +
+
+  geom_density(
+    alpha = 0.55,
+    adjust = 1.2,
+    color = "black",
+    linewidth = 0.8
+  ) +
+
+  scale_fill_manual(
+    values = paper_colors
+  ) +
+
+  theme_minimal(
+    base_size = 14
+  ) +
+
+  labs(
+    title = "Fuzzy brightness densities",
+    subtitle = "Monsummano image - K = 2 clusters",
+    x = "RGB brightness",
+    y = "Weighted density",
+    fill = "Cluster"
+  ) +
+
+  theme(
+    legend.position = "right"
+  )
+
+
+# ============================================================
+# 5. DISPLAY
+# ============================================================
+
+print(
+  p_brightness
+)
+
+
+# ============================================================
+# 6. SAVE
+# ============================================================
+
+ggsave(
+  filename = "monsummano_fuzzy_brightness_K2.png",
+  plot = p_brightness,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
