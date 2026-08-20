@@ -344,12 +344,12 @@ p1 <- ggplot(
       vjust = 0.5,
       hjust = 1
     )
-  ) +
+  ) #+
 
-scale_fill_viridis_d(
-  option = "viridis",
-  end = 0.9
-)
+# scale_fill_viridis_d(
+#  option = "viridis",
+#  end = 0.9
+#)
 
 print(p1)
 
@@ -413,12 +413,12 @@ p2 <- ggplot(
       vjust = 0.5,
       hjust = 1
     )
-  ) + 
+  ) #+ 
   
-  scale_fill_viridis_d(
-    option = "viridis",
-    end = 0.9
-  )
+#  scale_fill_viridis_d(
+#    option = "viridis",
+#    end = 0.9
+#  )
 
 print(p2)
 
@@ -474,12 +474,12 @@ p3 <- ggplot(
 
   theme(
     legend.position = "none"
-  ) +
+  ) #+
 
-  scale_fill_viridis_d(
-    option = "viridis",
-    end = 0.9
-  )
+#  scale_fill_viridis_d(
+#    option = "viridis",
+#    end = 0.9
+#  )
 
 print(p3)
 
