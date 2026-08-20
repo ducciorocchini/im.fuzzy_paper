@@ -22,7 +22,7 @@ library(clue)
 # CHANGE THIS to the same import command/path already used
 # in your Monsummano analyses
 
-img <- rast("monsummano.tif")
+img <- rast("https://raw.githubusercontent.com/ducciorocchini/im.fuzzy_paper/main/Data/monsummano.png")
 
 print(img)
 
