@@ -13,7 +13,7 @@ For visual comparison, clustering outputs obtained with the three methods are pr
    File: fuzzy_c_means.png
 
 5. **`im.fuzzy()`**  
-   Fuzzy membership maps derived from pixel-to-centroid distances using k-means-derived cluster centers.
+   Fuzzy membership maps derived from pixel-to-centroid distances using k-means-derived cluster centers, and related uncertainty
 
    File: monsummano_imfuzzy_memberships_K2.png
 
