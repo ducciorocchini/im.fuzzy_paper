@@ -563,7 +563,13 @@ p1 <- ggplot(
       angle = 20,
       hjust = 1
     )
+  ) +
+
+  scale_fill_viridis_d(
+    option = "viridis",
+    end = 0.9
   )
+
 
 print(p1)
 
@@ -618,6 +624,11 @@ p2 <- ggplot(
     subtitle = "Monsummano image",
     x = NULL,
     y = "Index value"
+  ) +
+
+  scale_fill_viridis_d(
+    option = "viridis",
+    end = 0.9
   )
 
 print(p2)
@@ -670,6 +681,11 @@ p3 <- ggplot(
     ),
     x = NULL,
     y = "Index value"
+  ) +
+
+  scale_fill_viridis_d(
+    option = "viridis",
+    end = 0.9
   )
 
 print(p3)
