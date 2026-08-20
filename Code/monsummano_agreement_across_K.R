@@ -806,7 +806,198 @@ ggsave(
   dpi = 300
 )
 
+###########
 
 # ============================================================
-# END
+# PUBLICATION FIGURE
+# AGREEMENT ACROSS K: ARI + NMI
+#
+# Single ggplot with facets
 # ============================================================
+
+library(ggplot2)
+library(viridisLite)
+
+
+# ------------------------------------------------------------
+# 1. Build single long data frame
+# ------------------------------------------------------------
+
+agreement_plot <- rbind(
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Adjusted Rand Index",
+    Comparison = "fuzzy C-means vs k-means",
+    Value = agreement_results$ARI_fcm_km
+  ),
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Adjusted Rand Index",
+    Comparison = "im.fuzzy vs fuzzy C-means",
+    Value = agreement_results$ARI_imf_fcm
+  ),
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Adjusted Rand Index",
+    Comparison = "im.fuzzy vs k-means",
+    Value = agreement_results$ARI_imf_km
+  ),
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Normalized Mutual Information",
+    Comparison = "fuzzy C-means vs k-means",
+    Value = agreement_results$NMI_fcm_km
+  ),
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Normalized Mutual Information",
+    Comparison = "im.fuzzy vs fuzzy C-means",
+    Value = agreement_results$NMI_imf_fcm
+  ),
+
+  data.frame(
+    K = agreement_results$K,
+    Metric = "Normalized Mutual Information",
+    Comparison = "im.fuzzy vs k-means",
+    Value = agreement_results$NMI_imf_km
+  )
+)
+
+
+# ------------------------------------------------------------
+# 2. Factor order
+# ------------------------------------------------------------
+
+agreement_plot$Comparison <- factor(
+  agreement_plot$Comparison,
+  levels = c(
+    "fuzzy C-means vs k-means",
+    "im.fuzzy vs fuzzy C-means",
+    "im.fuzzy vs k-means"
+  )
+)
+
+
+agreement_plot$Metric <- factor(
+  agreement_plot$Metric,
+  levels = c(
+    "Adjusted Rand Index",
+    "Normalized Mutual Information"
+  ),
+  labels = c(
+    "(a) Adjusted Rand Index",
+    "(b) Normalized Mutual Information"
+  )
+)
+
+
+# ------------------------------------------------------------
+# 3. Colorblind-friendly colors
+# ------------------------------------------------------------
+
+comparison_colors <- viridisLite::viridis(
+  3,
+  option = "D",
+  end = 0.9
+)
+
+
+# ============================================================
+# 4. FINAL FIGURE
+# ============================================================
+
+p_agreement_K <- ggplot(
+  agreement_plot,
+  aes(
+    x = K,
+    y = Value,
+    color = Comparison,
+    group = Comparison
+  )
+) +
+
+  geom_line(
+    linewidth = 1
+  ) +
+
+  geom_point(
+    size = 3
+  ) +
+
+  facet_wrap(
+    ~ Metric,
+    ncol = 1
+  ) +
+
+  scale_color_manual(
+    values = comparison_colors
+  ) +
+
+  scale_x_continuous(
+    breaks = 2:10
+  ) +
+
+  scale_y_continuous(
+    breaks = seq(
+      0,
+      1,
+      0.25
+    )
+  ) +
+
+  coord_cartesian(
+    ylim = c(0, 1)
+  ) +
+
+  theme_minimal(
+    base_size = 14
+  ) +
+
+  labs(
+    title = "Agreement among clustering methods across K",
+    subtitle = "Monsummano image",
+    x = "Number of clusters (K)",
+    y = "Agreement",
+    color = "Comparison"
+  ) +
+
+  theme(
+    legend.position = "bottom",
+
+    strip.text = element_text(
+      size = 14,
+      face = "bold"
+    ),
+
+    panel.spacing = grid::unit(
+      1.2,
+      "lines"
+    )
+  )
+
+
+# ============================================================
+# 5. DISPLAY
+# ============================================================
+
+print(
+  p_agreement_K
+)
+
+
+# ============================================================
+# 6. SAVE
+# ============================================================
+
+ggsave(
+  filename = "monsummano_agreement_across_K_combined.png",
+  plot = p_agreement_K,
+  width = 8,
+  height = 8,
+  dpi = 300
+)
