@@ -1,12 +1,13 @@
 # ============================================================
-# MONSUMMANO - FUZZY PARTITION COMPARISON
+# MONSUMMANO - FUZZY MEMBERSHIP COMPARISON
 #
 # Panels:
 # (a) Original RGB image
 # (b) k-means crisp partition
 # (c) fuzzy C-means membership - Cluster 1
-# (d) im.fuzzy() membership - Cluster 1
-# (e) absolute membership difference
+# (d) fuzzy C-means membership - Cluster 2
+# (e) im.fuzzy() membership - Cluster 1
+# (f) im.fuzzy() membership - Cluster 2
 #
 # K = 2
 # ============================================================
@@ -36,6 +37,8 @@ monsummano_url <- paste0(
 img <- terra::rast(
   monsummano_url
 )
+
+img <- flip(img)
 
 print(img)
 
@@ -70,8 +73,6 @@ X_valid <- X[
 
 # ------------------------------------------------------------
 # 5. Scale each band to 0-255
-#
-# Same preprocessing used internally by im.fuzzy()
 # ------------------------------------------------------------
 
 scale_255 <- function(x) {
@@ -87,7 +88,6 @@ scale_255 <- function(x) {
   )
 
   if (xmax == xmin) {
-
     return(
       rep(
         0,
@@ -115,9 +115,7 @@ X_scaled <- as.matrix(
 # 6. K-MEANS
 # ============================================================
 
-set.seed(
-  seed
-)
+set.seed(seed)
 
 km <- stats::kmeans(
   X_scaled,
@@ -131,9 +129,7 @@ labels_km <- km$cluster
 # 7. FUZZY C-MEANS
 # ============================================================
 
-set.seed(
-  seed
-)
+set.seed(seed)
 
 fcm <- e1071::cmeans(
   X_scaled,
@@ -162,11 +158,6 @@ imf <- imageRy::im.fuzzy(
   do_plot = FALSE
 )
 
-
-# ------------------------------------------------------------
-# Extract membership matrix
-# ------------------------------------------------------------
-
 U_imf_all <- terra::values(
   imf$memberships,
   mat = TRUE
@@ -186,74 +177,59 @@ labels_imf <- apply(
 
 
 # ============================================================
-# 9. MATCH FCM AND im.fuzzy CLUSTERS TO K-MEANS
-#
-# Cluster IDs are arbitrary.
-# We use k-means as the reference so that "Cluster 1"
-# corresponds to the same radiometric group in all methods.
+# 9. MATCH CLUSTER IDENTITIES TO K-MEANS
 # ============================================================
 
+match_memberships <- function(
+  reference_labels,
+  target_labels,
+  U_target,
+  K
+) {
 
-# ------------------------------------------------------------
-# FCM matching
-# ------------------------------------------------------------
-
-tab_fcm <- table(
-  factor(
-    labels_km,
-    levels = seq_len(K)
-  ),
-  factor(
-    labels_fcm,
-    levels = seq_len(K)
+  tab <- table(
+    factor(
+      reference_labels,
+      levels = seq_len(K)
+    ),
+    factor(
+      target_labels,
+      levels = seq_len(K)
+    )
   )
-)
 
-assignment_fcm <- clue::solve_LSAP(
-  tab_fcm,
-  maximum = TRUE
-)
-
-fcm_cluster_for_reference1 <- as.integer(
-  assignment_fcm[1]
-)
-
-
-# ------------------------------------------------------------
-# im.fuzzy matching
-# ------------------------------------------------------------
-
-tab_imf <- table(
-  factor(
-    labels_km,
-    levels = seq_len(K)
-  ),
-  factor(
-    labels_imf,
-    levels = seq_len(K)
+  assignment <- clue::solve_LSAP(
+    tab,
+    maximum = TRUE
   )
+
+  # For reference cluster 1,2,... find the corresponding
+  # target membership column
+  matched_columns <- as.integer(
+    assignment
+  )
+
+  U_target[
+    ,
+    matched_columns,
+    drop = FALSE
+  ]
+}
+
+
+U_fcm_matched <- match_memberships(
+  reference_labels = labels_km,
+  target_labels = labels_fcm,
+  U_target = U_fcm,
+  K = K
 )
 
-assignment_imf <- clue::solve_LSAP(
-  tab_imf,
-  maximum = TRUE
-)
 
-imf_cluster_for_reference1 <- as.integer(
-  assignment_imf[1]
-)
-
-
-cat(
-  "\nFCM cluster corresponding to k-means Cluster 1:",
-  fcm_cluster_for_reference1,
-  "\n"
-)
-
-cat(
-  "im.fuzzy cluster corresponding to k-means Cluster 1:",
-  imf_cluster_for_reference1,
-  "\n"
+U_imf_matched <- match_memberships(
+  reference_labels = labels_km,
+  target_labels = labels_imf,
+  U_target = U_imf,
+  K = K
 )
 
 
@@ -278,84 +254,94 @@ terra::values(
 
 
 # ============================================================
-# 11. BUILD FCM MEMBERSHIP RASTER - CLUSTER 1
+# 11. HELPER FUNCTION FOR MEMBERSHIP RASTERS
 # ============================================================
 
-r_fcm_membership1 <- template
+make_membership_raster <- function(
+  membership_values
+) {
 
-vals_fcm <- rep(
-  NA_real_,
-  terra::ncell(template)
+  r <- template
+
+  vals <- rep(
+    NA_real_,
+    terra::ncell(template)
+  )
+
+  vals[valid_idx] <- membership_values
+
+  terra::values(r) <- vals
+
+  r
+}
+
+
+# ============================================================
+# 12. BUILD ALL FOUR FUZZY MEMBERSHIP RASTERS
+# ============================================================
+
+r_fcm_1 <- make_membership_raster(
+  U_fcm_matched[, 1]
 )
 
-vals_fcm[valid_idx] <-
-  U_fcm[
-    ,
-    fcm_cluster_for_reference1
-  ]
-
-terra::values(
-  r_fcm_membership1
-) <- vals_fcm
-
-
-# ============================================================
-# 12. BUILD im.fuzzy MEMBERSHIP RASTER - CLUSTER 1
-# ============================================================
-
-r_imf_membership1 <- template
-
-vals_imf <- rep(
-  NA_real_,
-  terra::ncell(template)
+r_fcm_2 <- make_membership_raster(
+  U_fcm_matched[, 2]
 )
 
-vals_imf[valid_idx] <-
-  U_imf[
-    ,
-    imf_cluster_for_reference1
-  ]
+r_imf_1 <- make_membership_raster(
+  U_imf_matched[, 1]
+)
 
-terra::values(
-  r_imf_membership1
-) <- vals_imf
-
-
-# ============================================================
-# 13. ABSOLUTE MEMBERSHIP DIFFERENCE
-# ============================================================
-
-r_membership_difference <- abs(
-  r_fcm_membership1 -
-  r_imf_membership1
+r_imf_2 <- make_membership_raster(
+  U_imf_matched[, 2]
 )
 
 
 # ============================================================
-# 14. NUMERICAL DIFFERENCE SUMMARY
+# 13. CHECK MEMBERSHIP SUMS
 # ============================================================
 
-membership_difference <- abs(
-  U_fcm[
-    ,
-    fcm_cluster_for_reference1
-  ] -
-  U_imf[
-    ,
-    imf_cluster_for_reference1
-  ]
+cat(
+  "\nFCM membership sum range:\n"
 )
 
+print(
+  range(
+    rowSums(U_fcm_matched),
+    na.rm = TRUE
+  )
+)
+
+cat(
+  "\nim.fuzzy membership sum range:\n"
+)
+
+print(
+  range(
+    rowSums(U_imf_matched),
+    na.rm = TRUE
+  )
+)
+
+
+# ============================================================
+# 14. NUMERICAL MEMBERSHIP DIFFERENCE
+# ============================================================
+
+difference_matrix <- abs(
+  U_fcm_matched -
+  U_imf_matched
+)
 
 cat("\n")
 cat("============================================\n")
-cat("MEMBERSHIP DIFFERENCE SUMMARY\n")
+cat("FUZZY MEMBERSHIP DIFFERENCE\n")
 cat("============================================\n")
 
 cat(
   "Mean absolute difference:",
   mean(
-    membership_difference,
+    difference_matrix,
     na.rm = TRUE
   ),
   "\n"
@@ -364,7 +350,7 @@ cat(
 cat(
   "Median absolute difference:",
   median(
-    membership_difference,
+    difference_matrix,
     na.rm = TRUE
   ),
   "\n"
@@ -373,7 +359,7 @@ cat(
 cat(
   "Maximum absolute difference:",
   max(
-    membership_difference,
+    difference_matrix,
     na.rm = TRUE
   ),
   "\n"
@@ -395,25 +381,21 @@ membership_colors <- viridisLite::viridis(
   option = "D"
 )
 
-difference_colors <- viridisLite::magma(
-  100
-)
-
 
 # ============================================================
-# 16. FINAL FIGURE
+# 16. SIX-PANEL FIGURE
 # ============================================================
 
 png(
-  filename = "monsummano_fuzzy_comparison_K2.png",
-  width = 3000,
-  height = 3600,
+  filename = "monsummano_fuzzy_memberships_K2.png",
+  width = 3200,
+  height = 4200,
   res = 300
 )
 
 par(
   mfrow = c(3, 2),
-  mar = c(1, 1, 3, 2)
+  mar = c(1, 1, 3, 3)
 )
 
 
@@ -433,7 +415,7 @@ terra::plotRGB(
 
 
 # ------------------------------------------------------------
-# (b) k-means crisp partition
+# (b) k-means partition
 # ------------------------------------------------------------
 
 terra::plot(
@@ -451,78 +433,85 @@ terra::plot(
 
 
 # ------------------------------------------------------------
-# (c) FCM membership
+# (c) FCM Cluster 1
 # ------------------------------------------------------------
 
 terra::plot(
-  r_fcm_membership1,
+  r_fcm_1,
   col = membership_colors,
   range = c(0, 1),
   axes = FALSE,
-  main = "(c) fuzzy C-means membership - Cluster 1"
+  main = "(c) fuzzy C-means - Cluster 1"
 )
 
 
 # ------------------------------------------------------------
-# (d) im.fuzzy membership
+# (d) FCM Cluster 2
 # ------------------------------------------------------------
 
 terra::plot(
-  r_imf_membership1,
+  r_fcm_2,
   col = membership_colors,
   range = c(0, 1),
   axes = FALSE,
-  main = "(d) im.fuzzy() membership - Cluster 1"
+  main = "(d) fuzzy C-means - Cluster 2"
 )
 
 
 # ------------------------------------------------------------
-# (e) Absolute membership difference
+# (e) im.fuzzy Cluster 1
 # ------------------------------------------------------------
 
 terra::plot(
-  r_membership_difference,
-  col = difference_colors,
+  r_imf_1,
+  col = membership_colors,
+  range = c(0, 1),
   axes = FALSE,
-  main = "(e) absolute membership difference"
+  main = "(e) im.fuzzy() - Cluster 1"
 )
 
 
 # ------------------------------------------------------------
-# Empty sixth panel
+# (f) im.fuzzy Cluster 2
 # ------------------------------------------------------------
 
-plot.new()
+terra::plot(
+  r_imf_2,
+  col = membership_colors,
+  range = c(0, 1),
+  axes = FALSE,
+  main = "(f) im.fuzzy() - Cluster 2"
+)
 
 
 dev.off()
 
 
 # ============================================================
-# 17. SAVE RASTERS
+# 17. SAVE MEMBERSHIP RASTERS
 # ============================================================
 
 terra::writeRaster(
-  r_km,
-  "monsummano_kmeans_partition_K2.tif",
-  overwrite = TRUE
-)
-
-terra::writeRaster(
-  r_fcm_membership1,
+  r_fcm_1,
   "monsummano_fcm_membership_cluster1_K2.tif",
   overwrite = TRUE
 )
 
 terra::writeRaster(
-  r_imf_membership1,
+  r_fcm_2,
+  "monsummano_fcm_membership_cluster2_K2.tif",
+  overwrite = TRUE
+)
+
+terra::writeRaster(
+  r_imf_1,
   "monsummano_imfuzzy_membership_cluster1_K2.tif",
   overwrite = TRUE
 )
 
 terra::writeRaster(
-  r_membership_difference,
-  "monsummano_membership_difference_K2.tif",
+  r_imf_2,
+  "monsummano_imfuzzy_membership_cluster2_K2.tif",
   overwrite = TRUE
 )
 
