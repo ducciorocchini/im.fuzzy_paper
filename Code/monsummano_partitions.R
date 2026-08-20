@@ -383,7 +383,7 @@ membership_colors <- viridisLite::viridis(
 
 
 # ============================================================
-# 16. SIX-PANEL FIGURE
+# 16. OUTPUT MAP FIGURES
 # ============================================================
 
 png(
@@ -394,7 +394,7 @@ png(
 )
 
 par(
-  mfrow = c(3, 2),
+  mfrow = c(1, 2),
   mar = c(1, 1, 3, 3)
 )
 
