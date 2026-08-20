@@ -565,10 +565,10 @@ p1 <- ggplot(
     )
   ) +
 
-  scale_fill_viridis_d(
-    option = "viridis",
-    end = 0.9
-  )
+#  scale_fill_viridis_d(
+#    option = "viridis",
+#    end = 0.9
+#  )
 
 
 print(p1)
@@ -626,10 +626,10 @@ p2 <- ggplot(
     y = "Index value"
   ) +
 
-  scale_fill_viridis_d(
-    option = "viridis",
-    end = 0.9
-  )
+ # scale_fill_viridis_d(
+ #   option = "viridis",
+ #   end = 0.9
+ # )
 
 print(p2)
 
@@ -683,10 +683,10 @@ p3 <- ggplot(
     y = "Index value"
   ) +
 
-  scale_fill_viridis_d(
-    option = "viridis",
-    end = 0.9
-  )
+#  scale_fill_viridis_d(
+#    option = "viridis",
+#    end = 0.9
+#  )
 
 print(p3)
 
