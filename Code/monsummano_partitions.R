@@ -386,19 +386,6 @@ membership_colors <- viridisLite::viridis(
 # 16. OUTPUT MAP FIGURES
 # ============================================================
 
-png(
-  filename = "monsummano_fuzzy_memberships_K2.png",
-  width = 3200,
-  height = 4200,
-  res = 300
-)
-
-par(
-  mfrow = c(1, 2),
-  mar = c(1, 1, 3, 3)
-)
-
-
 # ------------------------------------------------------------
 # (a) RGB image
 # ------------------------------------------------------------
@@ -412,7 +399,7 @@ imageRy::im.plotRGB(
 )
 
 # ------------------------------------------------------------
-# (b) k-means partition
+# k-means partition
 # ------------------------------------------------------------
 
 terra::plot(
@@ -425,7 +412,7 @@ terra::plot(
   ),
   axes = T,
   legend = FALSE,
-  main = "(b) k-means partition"
+  main = "k-means partition"
 )
 
 # Get raster extent
@@ -449,20 +436,32 @@ legend(
 )
 
 # ------------------------------------------------------------
-# (c) FCM Cluster 1
+# (a) FCM Cluster 1
 # ------------------------------------------------------------
+
+png(
+  filename = "fuzzy_c_means.png",
+  width = 3200,
+  height = 4200,
+  res = 300
+)
+
+par(
+  mfrow = c(1, 2),
+  mar = c(1, 1, 3, 3)
+)
 
 terra::plot(
   r_fcm_1,
   col = membership_colors,
   range = c(0, 1),
   axes = T,
-  main = "(c) fuzzy C-means - Cluster 1"
+  main = "(a) fuzzy C-means - Cluster 1"
 )
 
 
 # ------------------------------------------------------------
-# (d) FCM Cluster 2
+# (b) FCM Cluster 2
 # ------------------------------------------------------------
 
 terra::plot(
@@ -470,38 +469,10 @@ terra::plot(
   col = membership_colors,
   range = c(0, 1),
   axes = T,
-  main = "(d) fuzzy C-means - Cluster 2"
+  main = "(b) fuzzy C-means - Cluster 2"
 )
-
-
-# ------------------------------------------------------------
-# (e) im.fuzzy Cluster 1
-# ------------------------------------------------------------
-
-terra::plot(
-  r_imf_1,
-  col = membership_colors,
-  range = c(0, 1),
-  axes = T,
-  main = "(e) im.fuzzy() - Cluster 1"
-)
-
-
-# ------------------------------------------------------------
-# (f) im.fuzzy Cluster 2
-# ------------------------------------------------------------
-
-terra::plot(
-  r_imf_2,
-  col = membership_colors,
-  range = c(0, 1),
-  axes = T,
-  main = "(f) im.fuzzy() - Cluster 2"
-)
-
 
 dev.off()
-
 
 # ============================================================
 # 17. SAVE MEMBERSHIP RASTERS
@@ -658,3 +629,94 @@ ggsave(
   height = 5,
   dpi = 300
 )
+
+# ============================================================
+# im.fuzzy() UNCERTAINTY MAP
+#
+# uncertainty = 1 - maximum membership
+#
+# For K = 2:
+#   0.0 = high certainty
+#   0.5 = maximum uncertainty
+# ============================================================
+
+uncertainty_imf <- 1 - apply(
+  U_imf_matched,
+  1,
+  max
+)
+
+# Build raster
+r_imf_uncertainty <- template
+
+uncertainty_vals <- rep(
+  NA_real_,
+  terra::ncell(template)
+)
+
+uncertainty_vals[valid_idx] <- uncertainty_imf
+
+terra::values(
+  r_imf_uncertainty
+) <- uncertainty_vals
+
+
+# ------------------------------------------------------------
+# Check range
+# ------------------------------------------------------------
+
+cat("\n")
+cat("im.fuzzy uncertainty range:\n")
+
+print(
+  range(
+    uncertainty_imf,
+    na.rm = TRUE
+  )
+)
+
+
+#### Export paper maps
+
+png(
+  filename = "monsummano_fuzzy_memberships_K2.png",
+  width = 3200,
+  height = 4200,
+  res = 300
+)
+
+par(
+  mfrow = c(1, 3),
+  mar = c(1, 1, 3, 3)
+)
+
+
+# ------------------------------------------------------------
+# (e) im.fuzzy Cluster 1
+# ------------------------------------------------------------
+
+terra::plot(
+  r_imf_1,
+  col = membership_colors,
+  range = c(0, 1),
+  axes = T,
+  main = "(a) im.fuzzy() - Cluster 1"
+)
+
+
+# ------------------------------------------------------------
+# (f) im.fuzzy Cluster 2
+# ------------------------------------------------------------
+
+terra::plot(
+  r_imf_2,
+  col = membership_colors,
+  range = c(0, 1),
+  axes = T,
+  main = "(b) im.fuzzy() - Cluster 2"
+)
+
+# plot
+terra::plot(r_imf_uncertainty, col=mako(100), main = "(c) Membership uncertainty")
+
+dev.off()
