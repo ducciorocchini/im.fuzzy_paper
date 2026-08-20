@@ -41,7 +41,7 @@ print(img)
 # 3. Analysis parameters
 # ------------------------------------------------------------
 
-K <- 4
+K <- 2
 m <- 2
 
 # Number of random initializations
