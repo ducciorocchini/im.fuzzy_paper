@@ -403,16 +403,13 @@ par(
 # (a) RGB image
 # ------------------------------------------------------------
 
-terra::plotRGB(
+imageRy::im.plotRGB(
   img,
   r = 1,
   g = 2,
-  b = 3,
-  stretch = "lin",
-  axes = FALSE,
-  main = "(a) RGB image"
+  b = 3#,
+  #title = "(a) UAV RGB image"
 )
-
 
 # ------------------------------------------------------------
 # (b) k-means partition
@@ -426,11 +423,30 @@ terra::plot(
     K + 0.5,
     by = 1
   ),
-  axes = FALSE,
+  axes = T,
   legend = FALSE,
   main = "(b) k-means partition"
 )
 
+# Get raster extent
+e <- terra::ext(r_km)
+
+# Put legend safely inside upper-right corner
+legend(
+  x = e$xmax - 0.01 * (e$xmax - e$xmin),
+  y = e$ymax - 0.01 * (e$ymax - e$ymin),
+  legend = c(
+    "Cluster 1",
+    "Cluster 2"
+  ),
+  fill = cluster_colors,
+  border = "black",
+  bg = "white",
+  bty = "o",
+  cex = 0.8,
+  xjust = 1,
+  yjust = 1
+)
 
 # ------------------------------------------------------------
 # (c) FCM Cluster 1
@@ -440,7 +456,7 @@ terra::plot(
   r_fcm_1,
   col = membership_colors,
   range = c(0, 1),
-  axes = FALSE,
+  axes = T,
   main = "(c) fuzzy C-means - Cluster 1"
 )
 
@@ -453,7 +469,7 @@ terra::plot(
   r_fcm_2,
   col = membership_colors,
   range = c(0, 1),
-  axes = FALSE,
+  axes = T,
   main = "(d) fuzzy C-means - Cluster 2"
 )
 
@@ -466,7 +482,7 @@ terra::plot(
   r_imf_1,
   col = membership_colors,
   range = c(0, 1),
-  axes = FALSE,
+  axes = T,
   main = "(e) im.fuzzy() - Cluster 1"
 )
 
@@ -479,7 +495,7 @@ terra::plot(
   r_imf_2,
   col = membership_colors,
   range = c(0, 1),
-  axes = FALSE,
+  axes = T,
   main = "(f) im.fuzzy() - Cluster 2"
 )
 
