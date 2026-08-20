@@ -2,11 +2,11 @@
 
 Code and data related to the paper on the [im.fuzzy()](https://github.com/ducciorocchini/imageRy/blob/main/R/im.fuzzy.R) function from the [imageRy](https://github.com/ducciorocchini/imageRy) package.
 
-# **`im.fuzzy()` – Fuzzy Image Classification Using K-Means and Membership Maps**
+# **`im.fuzzy()` – Fuzzy Image Clustering Using K-Means and Membership Maps**
 
 ## **Overview**
 
-`im.fuzzy()` performs **unsupervised classification** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard classification map, it computes:
+`im.fuzzy()` performs **unsupervised clustering** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard classification map, it computes:
 
 1. **Spectral distance maps** — one raster per class showing the Euclidean distance of each pixel to that cluster centroid.
 2. **Fuzzy membership maps** — one raster per class showing how strongly each pixel belongs to that cluster, following fuzzy c-means logic.
