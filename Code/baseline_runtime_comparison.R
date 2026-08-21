@@ -367,6 +367,25 @@ print(names(summary_clean))
 
 
 # ============================================================
+# COLORBLIND-FRIENDLY METHOD PALETTE
+# Same colors used in Figure 7
+# ============================================================
+
+library(viridisLite)
+
+method_colors <- viridisLite::viridis(
+  3,
+  option = "D",
+  end = 0.9
+)
+
+names(method_colors) <- c(
+  "fuzzy c-means",
+  "im.fuzzy",
+  "k-means"
+)
+
+# ============================================================
 # 8. Runtime plot
 # ============================================================
 
@@ -397,6 +416,10 @@ p_runtime <- ggplot(
       ymax = Runtime_mean + Runtime_sd
     ),
     width = 0
+  ) +
+
+  scale_color_manual(
+    values = method_colors
   ) +
 
   theme_minimal(
@@ -450,6 +473,10 @@ p_memory <- ggplot(
       ymax = Peak_RAM_mean + Peak_RAM_sd
     ),
     width = 0
+  ) +
+
+  scale_color_manual(
+    values = method_colors
   ) +
 
   theme_minimal(
