@@ -917,6 +917,8 @@ p_agreement_K <- ggplot(
     x = K,
     y = Value,
     color = Comparison,
+    linetype = Comparison,
+    shape = Comparison,
     group = Comparison
   )
 ) +
@@ -936,6 +938,22 @@ p_agreement_K <- ggplot(
 
   scale_color_manual(
     values = comparison_colors
+  ) +
+
+  scale_linetype_manual(
+    values = c(
+      "dotted",
+      "dashed",
+      "solid"
+    )
+  ) +
+
+  scale_shape_manual(
+    values = c(
+      17,  # triangle: fuzzy C-means vs k-means
+      15,  # square: im.fuzzy vs fuzzy C-means
+      16   # circle: im.fuzzy vs k-means
+    )
   ) +
 
   scale_x_continuous(
@@ -963,7 +981,9 @@ p_agreement_K <- ggplot(
     subtitle = "Monsummano image",
     x = "Number of clusters (K)",
     y = "Agreement",
-    color = "Comparison"
+    color = "Comparison",
+    linetype = "Comparison",
+    shape = "Comparison"
   ) +
 
   theme(
