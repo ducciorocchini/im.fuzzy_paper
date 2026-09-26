@@ -9,7 +9,7 @@ Code and data related to the paper on the [im.fuzzy()](https://github.com/duccio
 `im.fuzzy()` performs **unsupervised clustering** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard clustering map, it computes:
 
 1. **Spectral distance maps** — one raster per cluster showing the Euclidean distance of each pixel to that cluster centroid.
-2. **Fuzzy membership maps** — one raster per clusrer showing how strongly each pixel belongs to that cluster, following fuzzy c-means logic.
+2. **Fuzzy membership maps** — one raster per cluster showing its relative affinity to that cluster, using a standard distance-based fuzzy membership formulation.
 
 This means that instead of assigning each pixel to only one cluster (hard clustering), the function produces **soft/fuzzy membership values**, which are especially useful for:
 
@@ -47,7 +47,7 @@ Small values = high similarity to that cluster.
 
 ### ✔ **Fuzzy membership maps**
 
-Using the fuzzy c-means membership formula:
+Using a standard fuzzy membership formula based on distances to k-means-derived centroids:
 
 [
 u_{ik} = \frac{1}{\sum_j \left( \frac{d_{ik}}{d_{ij}} \right)^{2/(m - 1)} }
