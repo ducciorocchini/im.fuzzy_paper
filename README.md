@@ -8,10 +8,10 @@ Code and data related to the paper on the [im.fuzzy()](https://github.com/duccio
 
 `im.fuzzy()` performs **unsupervised clustering** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard classification map, it computes:
 
-1. **Spectral distance maps** — one raster per class showing the Euclidean distance of each pixel to that cluster centroid.
-2. **Fuzzy membership maps** — one raster per class showing how strongly each pixel belongs to that cluster, following fuzzy c-means logic.
+1. **Spectral distance maps** — one raster per cluster showing the Euclidean distance of each pixel to that cluster centroid.
+2. **Fuzzy membership maps** — one raster per clusrer showing how strongly each pixel belongs to that cluster, following fuzzy c-means logic.
 
-This means that instead of assigning each pixel to only one class (hard clustering), the function produces **soft/fuzzy membership values**, which are especially useful for:
+This means that instead of assigning each pixel to only one cluster (hard clustering), the function produces **soft/fuzzy membership values**, which are especially useful for:
 
 * Mixed pixels
 * Transitional areas (forest–grassland, soil–crop, shallow water)
@@ -28,11 +28,11 @@ The function returns both **distance rasters** and **membership rasters**, and o
 
 * Fast and robust unsupervised algorithm
 * Computes **spectral centroids** in feature space
-* All structure from your original classification function is preserved
+* All structure from your original clustering function is preserved
 
 ### ✔ **Spectral distance maps**
 
-For each class *k*, a raster layer contains:
+For each cluster *k*, a raster layer contains:
 
 [
 d_{ik} = \sqrt{\sum_b (x_{ib} - c_{kb})^2}
@@ -41,9 +41,9 @@ d_{ik} = \sqrt{\sum_b (x_{ib} - c_{kb})^2}
 where
 
 * ( x_{ib} ) = pixel value of band *b*
-* ( c_{kb} ) = centroid of class *k*
+* ( c_{kb} ) = centroid of cluster *k*
 
-Small values = high similarity to that class.
+Small values = high similarity to that cluster.
 
 ### ✔ **Fuzzy membership maps**
 
@@ -65,9 +65,9 @@ The function returns a list:
 
 ```r
 list(
-  distances   = SpatRaster (one layer per class),
-  memberships = SpatRaster (one layer per class, values 0–1),
-  centers     = matrix of class centroids
+  distances   = SpatRaster (one layer per cluster),
+  memberships = SpatRaster (one layer per cluster, values 0–1),
+  centers     = matrix of cluster centroids
 )
 ```
 
@@ -92,7 +92,7 @@ im.fuzzy <- function(input_image,
 | Argument                      | Description                                                      |
 | ----------------------------- | ---------------------------------------------------------------- |
 | `input_image`                 | A `SpatRaster` object (RGB or 1-band).                           |
-| `num_clusters`                | Number of clusters (classes) for k-means.                        |
+| `num_clusters`                | Number of clusters for k-means.                                  |
 | `seed`                        | Optional random seed for reproducibility.                        |
 | `m`                           | Fuzzifier for membership calculation; must be > 1.               |
 | `do_plot`                     | If `TRUE`, plot membership maps using terra defaults.            |
@@ -115,7 +115,7 @@ im.fuzzy <- function(input_image,
 
 ## **3. Compute distances**
 
-For each pixel and class, compute Euclidean spectral distance to the centroid.
+For each pixel and cluster, compute Euclidean spectral distance to the centroid.
 
 ## **4. Compute fuzzy memberships**
 
@@ -123,7 +123,7 @@ Apply fuzzy-c-means membership formula:
 
 * Membership = high if the pixel is close to the centroid
 * Membership = low if far
-* Sum of memberships across classes = 1 per pixel
+* Sum of memberships across clusters = 1 per pixel
 
 Handles edge case when a pixel exactly matches a centroid (distance = 0).
 
@@ -134,19 +134,19 @@ Two `SpatRaster` stacks are created:
 ### **Distances**
 
 ```
-class_1_distance
-class_2_distance
+cluster_1_distance
+cluster_2_distance
 ...
-class_k_distance
+cluster_k_distance
 ```
 
 ### **Memberships**
 
 ```
-class_1_membership
-class_2_membership
+cluster_1_membership
+cluster_2_membership
 ...
-class_k_membership
+cluster_k_membership
 ```
 
 ## **6. Plotting**
@@ -169,7 +169,7 @@ library(terra)
 # Load an RGB or single-band raster
 img <- rast("my_image.tif")
 
-# Perform fuzzy classification with 4 clusters
+# Perform fuzzy clustering with 4 clusters
 result <- im.fuzzy(img, num_clusters = 4, seed = 123)
 
 # Access outputs
@@ -184,16 +184,16 @@ centers   <- result$centers          # k-means centroids
 plot(mem_maps)
 ```
 
-## **Inspect membership of class 1**
+## **Inspect membership of cluster 1**
 
 ```r
-plot(mem_maps[[1]], main = "Membership to class 1")
+plot(mem_maps[[1]], main = "Membership to cluster 1")
 ```
 
 Values close to:
 
-* **1.0** → pixel very close to class center
-* **0.0** → pixel far from class center
+* **1.0** → pixel very close to cluster center
+* **0.0** → pixel far from cluster center
 
 ---
 
@@ -201,10 +201,10 @@ Values close to:
 
 ## **Distances vs. Memberships**
 
-| Output              | Meaning                                             | Range              |
-| ------------------- | --------------------------------------------------- | ------------------ |
-| **Distance maps**   | Raw spectral dissimilarity from each class centroid | 0 → large positive |
-| **Membership maps** | Soft classification probabilities (fuzzy sets)      | 0–1                |
+| Output              | Meaning                                               | Range              |
+| ------------------- | ----------------------------------------------------  | ------------------ |
+| **Distance maps**   | Raw spectral dissimilarity from each cluster centroid | 0 → large positive |
+| **Membership maps** | Soft clustering probabilities (fuzzy sets)            | 0–1                |
 
 Membership maps are more intuitive for interpretation; distance maps are useful for analyzing uncertainty and centroid geometry.
 
