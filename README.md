@@ -6,7 +6,7 @@ Code and data related to the paper on the [im.fuzzy()](https://github.com/duccio
 
 ## **Overview**
 
-`im.fuzzy()` performs **unsupervised clustering** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard classification map, it computes:
+`im.fuzzy()` performs **unsupervised clustering** of raster images (RGB or single-band) using **k-means clustering**, but instead of producing a single hard clustering map, it computes:
 
 1. **Spectral distance maps** — one raster per cluster showing the Euclidean distance of each pixel to that cluster centroid.
 2. **Fuzzy membership maps** — one raster per clusrer showing how strongly each pixel belongs to that cluster, following fuzzy c-means logic.
@@ -216,7 +216,7 @@ Membership maps are more intuitive for interpretation; distance maps are useful 
 * Mixed pixel environments (urban–rural, ecotones)
 * Spectral unmixing groundwork
 * Change detection (compare memberships over time)
-* Assessing uncertainty in k-means classification
+* Assessing uncertainty in k-means clustering
 
 ---
 
@@ -224,7 +224,7 @@ Membership maps are more intuitive for interpretation; distance maps are useful 
 
 Let me know if you'd like to add:
 
-* Hard classification derived from fuzzy memberships
+* Hard clustering derived from fuzzy memberships
 * Automatic naming of clusters based on user input
 * PCA dimensionality reduction before clustering
 * Fuzzy entropy / uncertainty map
