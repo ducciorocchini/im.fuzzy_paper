@@ -206,7 +206,8 @@ Values close to:
 | **Distance maps**   | Raw spectral dissimilarity from each cluster centroid | 0 → large positive |
 | **Membership maps** | Soft clustering probabilities (fuzzy sets)            | 0–1                |
 
-Membership maps are more intuitive for interpretation; distance maps are useful for analyzing uncertainty and centroid geometry.
+Membership maps provide an intuitive representation of relative cluster affinity,
+while distance maps retain direct information on pixel-to-centroid dissimilarity.
 
 ---
 
@@ -232,4 +233,16 @@ Let me know if you'd like to add:
 * GPU acceleration
 
 ---
+
+## Reproducibility
+
+All scripts used to generate the analyses and figures reported in the paper
+are provided in the `Code` directory. Input datasets are available in the
+`Data` directory, and generated outputs are stored in `Output_maps`.
+Randomized analyses can be reproduced by setting the seeds reported in the
+corresponding scripts. The current implementation of `im.fuzzy()` is available
+in the `imageRy` GitHub repository.
+
+---
+
 
